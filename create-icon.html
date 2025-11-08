@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>生成应用图标</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 600px;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    canvas {
+      border: 2px solid #e0e0e0;
+      border-radius: 16px;
+      margin: 20px 0;
+    }
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 10px;
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    .instructions {
+      text-align: left;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 20px;
+    }
+    .instructions h3 {
+      margin-top: 0;
+      color: #667eea;
+    }
+    .instructions ol {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+    .instructions li {
+      margin: 8px 0;
+      line-height: 1.6;
+    }
+    code {
+      background: #e9ecef;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📝 待办事项应用图标生成器</h1>
+    <p>生成 1024x1024 的应用图标</p>
+    
+    <canvas id="canvas" width="1024" height="1024"></canvas>
+    
+    <div>
+      <button onclick="downloadIcon()">📥 下载图标 (icon.png)</button>
+      <button onclick="drawIcon()">🔄 重新生成</button>
+    </div>
+    
+    <div class="instructions">
+      <h3>📋 使用说明</h3>
+      <ol>
+        <li>点击"下载图标"按钮，保存为 <code>icon.png</code></li>
+        <li>将下载的 <code>icon.png</code> 放到项目的 <code>assets</code> 文件夹</li>
+        <li>在终端运行：<code>cd /Users/paidaxing/Desktop/TODO</code></li>
+        <li>生成 icns：<code>mkdir -p assets/icon.iconset</code></li>
+        <li>复制图标到 iconset：<code>sips -z 1024 1024 assets/icon.png --out assets/icon.iconset/icon_512x512@2x.png</code></li>
+        <li>生成 icns 文件：<code>iconutil -c icns assets/icon.iconset -o assets/icon.icns</code></li>
+        <li>打包应用：<code>npm run build:mac</code></li>
+      </ol>
+      <p><strong>或者更简单的方法：</strong></p>
+      <ol>
+        <li>下载图标后保存到 <code>assets/icon.png</code></li>
+        <li>在终端运行：<code>npm run build:mac</code>（electron-builder 会自动处理）</li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    function drawIcon() {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const size = 1024;
+      
+      // 清空画布
+      ctx.clearRect(0, 0, size, size);
+      
+      // 创建渐变背景
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#667eea');
+      gradient.addColorStop(1, '#764ba2');
+      
+      // 圆角矩形背景
+      ctx.fillStyle = gradient;
+      roundRect(ctx, 0, 0, size, size, 230);
+      ctx.fill();
+      
+      // 白色卡片
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.98)';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+      ctx.shadowBlur = 20;
+      ctx.shadowOffsetY = 8;
+      roundRect(ctx, 240, 200, 560, 680, 40);
+      ctx.fill();
+      ctx.shadowColor = 'transparent';
+      
+      // 顶部装饰条
+      const topGradient = ctx.createLinearGradient(240, 200, 800, 200);
+      topGradient.addColorStop(0, '#667eea');
+      topGradient.addColorStop(1, '#764ba2');
+      ctx.fillStyle = topGradient;
+      ctx.globalAlpha = 0.6;
+      roundRect(ctx, 240, 200, 560, 16, 40);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      
+      // 待办列表线条
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#667eea';
+      roundRect(ctx, 360, 320, 360, 16, 8);
+      ctx.fill();
+      roundRect(ctx, 360, 420, 300, 16, 8);
+      ctx.fill();
+      roundRect(ctx, 360, 520, 400, 16, 8);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      
+      // 复选框 - 未选中
+      ctx.strokeStyle = '#667eea';
+      ctx.lineWidth = 6;
+      roundRect(ctx, 290, 304, 48, 48, 12);
+      ctx.stroke();
+      
+      ctx.beginPath();
+      roundRect(ctx, 290, 404, 48, 48, 12);
+      ctx.stroke();
+      
+      // 复选框 - 已选中
+      ctx.fillStyle = '#667eea';
+      roundRect(ctx, 290, 504, 48, 48, 12);
+      ctx.fill();
+      
+      // 对勾
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(302, 528);
+      ctx.lineTo(314, 540);
+      ctx.lineTo(334, 512);
+      ctx.stroke();
+      
+      // 笔记本装订孔
+      ctx.globalAlpha = 0.15;
+      ctx.fillStyle = '#667eea';
+      ctx.beginPath();
+      ctx.arc(420, 640, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(512, 640, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(604, 640, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      
+      // 完成标记圆圈
+      ctx.fillStyle = '#51cf66';
+      ctx.globalAlpha = 0.95;
+      ctx.beginPath();
+      ctx.arc(800, 800, 70, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      
+      // 完成标记对勾
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 10;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(760, 800);
+      ctx.lineTo(790, 830);
+      ctx.lineTo(840, 770);
+      ctx.stroke();
+    }
+    
+    function roundRect(ctx, x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+    }
+    
+    function downloadIcon() {
+      const canvas = document.getElementById('canvas');
+      const link = document.createElement('a');
+      link.download = 'icon.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+    
+    // 页面加载时自动生成图标
+    window.onload = drawIcon;
+  </script>
+</body>
+</html>
